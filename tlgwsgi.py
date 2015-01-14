@@ -503,7 +503,7 @@ def generator_app(environ, start_response):
 
         else:   # no email address or wiki page given. normal cgi context.
             if chunked:
-                start_response('200 OK', [('Content-Type', 'text/%s; charset=utf-8' % mimeSubtype), ('Transfer-Encoding', 'chunked')]) 
+                start_response('200 OK', [('Content-Type', 'text/%s; charset=utf-8' % mimeSubtype), ('Transfer-Encoding', 'chunked'), ('Content-Encoding', 'identity')]) 
             else:
                 start_response('200 OK', [('Content-Type', 'text/%s; charset=utf-8' % mimeSubtype)])
             return outputIterable
