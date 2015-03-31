@@ -194,7 +194,7 @@ class TaskListGenerator:
         s= string.split(separatorChar, 1)
         if len(s)==1:
             res= self.cg.getPagesInCategory(string.replace(' ', '_'), defaultdepth)
-            #~ print res
+            
             return res
         else:
             if s[0]=='wl':  # watchlist
@@ -297,13 +297,10 @@ class TaskListGenerator:
             
             yield self.mkStatus(_('evaluating query string \'%s\' with depth %d') % (queryString, int(queryDepth)))
 
-            #~ self.cg= CatGraphInterface(host=config['graphserv-host'], port=int(config['graphserv-port']), graphname=self.wiki)
             cghost= FindCGHost(self.wiki)
             if cghost==None:
                 raise RuntimeError("no catgraph host found for graph '%s'" % self.wiki)
-            #~ raise RuntimeError("host: %s" % cghost)
             self.cg= CatGraphInterface(host= cghost, port= int(config['graphserv-port']), graphname= self.wiki)
-            #~ self.pagesToTest= self.cg.executeSearchString(queryString, queryDepth)
             self.pagesToTest= self.evalQueryString(queryString, queryDepth)
             
             yield self.mkStatus(_('query found %d results.') % len(self.pagesToTest))

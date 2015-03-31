@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 import os
+import socket
 from wikitools import wiki, api
 from utils import *
 
@@ -10,9 +11,13 @@ class SimpleMW:
     def __init__(self, lang):
         try:
             if str(lang)=='commons':
-                self.site= wiki.Wiki('http://commons.wikimedia.org/w/api.php')
+                host= "commons.wikimedia.org"
             else:
-                self.site= wiki.Wiki('http://%s.wikipedia.org/w/api.php' % str(lang))
+                host= "%s.wikipedia.org" % str(lang)
+            # wikitools.wiki.Wiki hangs with 'Name or service not known trying request again in X seconds" on non-existent hosts, 
+            # so catch this condition here and generate exception on dns lookup failure
+            socket.getaddrinfo(host, 80) 
+            self.site= wiki.Wiki("http://%s/w/api.php" % host)
             self.site.setUserAgent('TLGBackend/0.1 (http://toolserver.org/~render/stools/tlg)')
             self.site.cookiepath= os.path.expanduser('~')+'/.tlgbackend/'
             try: os.mkdir(self.site.cookiepath)
