@@ -16,13 +16,16 @@ class CatGraphInterface:
         self.gp= client.Connection( client.ClientTransport(host, port), graphname )
         self.gp.connect()
         self.graphname= graphname
-        self.wikiname= graphname + '_p'
+        self.wikiname= (graphname.split('_')[0] if graphname.endswith('_ns14') else graphname)  + '_p' 
     
-    def getPagesInCategory(self, category, depth=2):
+    def getPagesInCategory(self, category, depth=2, max=None):
         catID= getCategoryID(self.wikiname, category)
         if catID!=None:
             result= []
-            successors= self.gp.capture_traverse_successors(catID, depth)
+            if max:
+                successors= self.gp.capture_traverse_successors(catID, str(depth), str(max))
+            else:
+                successors= self.gp.capture_traverse_successors(catID, str(depth))
             if successors:  # result can be None for empty categories
                 # convert list of tuples to simple list. is there a faster (i.e. built-in) way to do this?
                 for i in successors:

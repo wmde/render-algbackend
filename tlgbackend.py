@@ -189,13 +189,32 @@ class TaskListGenerator:
     ## evaluate a single query category.
     # 'wl#USER,TOKEN' special syntax queries USER's watchlist instead of CatGraph.
     # 'title#PAGETITLE' returns only a single page.
+    # if working on a category-only graph (self.cg_noleaves), the returned list may contain duplicates, which are removed by the conversion to a set in evalQueryString.
     def evalQueryToken(self, string, defaultdepth):
         separatorChar= '#'  # special separator char for things like 'title#PAGETITLE'
         s= string.split(separatorChar, 1)
         if len(s)==1:
-            res= self.cg.getPagesInCategory(string.replace(' ', '_'), defaultdepth)
-            
-            return res
+            max= 1000000
+            if self.cg_noleaves:
+                res= self.cg.getPagesInCategory(string.replace(' ', '_'), int(defaultdepth)-1, )
+                cur= getCursors()[self.wiki+'_p']
+                ret= []
+                # running into problems with huge result set (max_allowed_packet), so doing the query in chunks
+                chunks= lambda coll,size: [ coll[i:i+size] for i in range(0,len(coll),size) ]
+                for chunk in chunks(res, 500):
+                    cur.execute("""select N.page_id from page as N 
+                    join categorylinks on cl_from=N.page_id 
+                    join page as B on B.page_title=cl_to and B.page_namespace=14 and B.page_id in (%s)""" % (",".join( [str(id) for id in chunk] )) )
+                    subres= [ int(row['page_id']) for row in cur.fetchall() ]
+                    ret.extend( subres )
+                    dprint(1, "evalQueryToken: extended result to %s" % len(ret))
+                    if len(ret) > max: 
+                        dprint(1, "stopping...")
+                        break
+                return ret
+            else:
+                res= self.cg.getPagesInCategory(string.replace(' ', '_'), defaultdepth, max)
+                return res
         else:
             if s[0]=='wl':  # watchlist
                 wlparams= s[1].split(',')
@@ -266,7 +285,12 @@ class TaskListGenerator:
                     result-= set(self.evalQueryToken(category, depth))
                     dprint(2, ' - "%s"' % category)
             n+= 1
-        return list(result)
+        result= list(result)
+        if(len(result) > 1500000):
+            dprint(3, "capping humungous result set (len: %d)..." % len(result))
+            return result[:1500000]
+        else: 
+            return result
     
     
     ## find flaws (generator function).
@@ -299,8 +323,16 @@ class TaskListGenerator:
 
             cghost= FindCGHost(self.wiki)
             if cghost==None:
-                raise RuntimeError("no catgraph host found for graph '%s'" % self.wiki)
-            self.cg= CatGraphInterface(host= cghost, port= int(config['graphserv-port']), graphname= self.wiki)
+                cghost= FindCGHost(self.wiki + '_ns14') # try to find host for category-only graph
+                if cghost:
+                    # category-only graph found. use it and set "noleaves" flag, which means we need to pull articles from sql
+                    self.cg= CatGraphInterface(host= cghost, port= int(config['graphserv-port']), graphname= self.wiki + '_ns14')
+                    self.cg_noleaves= True
+                else:
+                    raise RuntimeError("no catgraph host found for graph '%s'" % self.wiki)
+            else:
+                self.cg= CatGraphInterface(host= cghost, port= int(config['graphserv-port']), graphname= self.wiki)
+                self.cg_noleaves= False
             self.pagesToTest= self.evalQueryString(queryString, queryDepth)
             
             yield self.mkStatus(_('query found %d results.') % len(self.pagesToTest))
