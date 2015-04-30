@@ -33,7 +33,7 @@ FlawFilters.register(FAll)
 
 ## 
 class FAllCategories(FlawFilter):
-    shortname= 'ALLCAT'
+    shortname= '_ALLCAT'
     label= _('All Categories')
     description= _('Show all categories without filtering.')
     
