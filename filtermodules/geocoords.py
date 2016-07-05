@@ -18,7 +18,7 @@ class FGeotags(FlawFilter):
             format_strings = ' OR '.join(['page.page_id=%s'] * len(self.pageIDs))
             cur.execute("""SELECT page.page_id, page.page_namespace, page.page_title, page.page_restrictions, page.page_counter, 
 page.page_is_new, page.page_random, page.page_touched, page.page_latest, page.page_len,
-geo_tags.gt_lat, geo_tags.gt_lon
+CAST(geo_tags.gt_lat AS CHAR) AS gt_lat, CAST(geo_tags.gt_lon AS CHAR) AS gt_lon
 FROM page 
 JOIN geo_tags ON geo_tags.gt_page_id=page.page_id
 WHERE (page.page_namespace=0 OR page.page_namespace=6) AND (%s)""" % format_strings, self.pageIDs)
