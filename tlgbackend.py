@@ -463,6 +463,10 @@ class TaskListGenerator:
             #~ self.mergedResults[key].sort(key= lambda x: x.FlawFilter.shortname)
         #~ except KeyError:
             #~ self.mergedResults[key]= [ result ]
+        
+        # workaround for file links...
+        if result.page['page_namespace']==6:
+            result.page['page_title']= "File:" + result.page['page_title']
 
         key= '%s:%s' % (result.wiki, str(result.page['page_id']))
         if not key in self.mergedResults:
