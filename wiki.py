@@ -17,8 +17,8 @@ class SimpleMW:
             # wikitools.wiki.Wiki hangs with 'Name or service not known trying request again in X seconds" on non-existent hosts, 
             # so catch this condition here and generate exception on dns lookup failure
             socket.getaddrinfo(host, 80) 
-            self.site= wiki.Wiki("http://%s/w/api.php" % host)
-            self.site.setUserAgent('TLGBackend/0.1 (http://toolserver.org/~render/stools/tlg)')
+            self.site= wiki.Wiki("https://%s/w/api.php" % host)
+            self.site.setUserAgent('TLGBackend/0.1 (http://tools.wmflabs.org/render/tlgbe/tlgwsgi.py)')
             self.site.cookiepath= os.path.expanduser('~')+'/.tlgbackend/'
             try: os.mkdir(self.site.cookiepath)
             except: pass    # assume it's already there
